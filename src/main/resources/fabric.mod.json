@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "lightmap",
+  "version": "${version}",
+  "name": "lightmap",
+  "description": "A simple and lightweight server web map.",
+  "authors": [],
+  "contact": {
+    "repo": "https://github.com/peter/lightmap"
+  },
+  "license": "All-Rights-Reserved",
+  "icon": "assets/lightmap/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "server": [
+      "minegame159.lightmap.LightMap"
+    ]
+  },
+  "mixins": [
+    "lightmap.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

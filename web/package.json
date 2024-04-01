@@ -1,0 +1,16 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "postbuild": "rm -rf ../src/main/resources/web && cp -r dist ../src/main/resources/web"
+  },
+  "author": "MineGame159",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.2.6"
+  }
+}

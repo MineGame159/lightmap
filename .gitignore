@@ -1,0 +1,9 @@
+.gradle
+.idea
+build
+
+run
+
+web/dist
+web/node_modules
+src/main/resources/web
