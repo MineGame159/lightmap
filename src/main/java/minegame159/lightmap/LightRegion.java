@@ -1,6 +1,8 @@
 package minegame159.lightmap;
 
 import minegame159.lightmap.events.LightMapEvents;
+import minegame159.lightmap.task.Task;
+import minegame159.lightmap.task.TaskQueue;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.util.math.ChunkPos;
@@ -66,7 +68,7 @@ public class LightRegion {
         if (System.nanoTime() - modifiedTime <= 500L * 1000000L) return;
         if (pendingModifications != 0) return;
 
-        tasks.add(this::write);
+        tasks.add(new WriteTask());
     }
 
     public synchronized void write() {
@@ -83,6 +85,13 @@ public class LightRegion {
         int z = pos.z & (SIZE - 1);
 
         return z * SIZE + x;
+    }
+
+    private class WriteTask extends Task {
+        @Override
+        protected void runImpl() {
+            write();
+        }
     }
 
     // Image IO

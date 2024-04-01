@@ -4,24 +4,21 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import minegame159.lightmap.commands.Commands;
+import minegame159.lightmap.importer.ImportRegionTask;
 import minegame159.lightmap.importer.WorldImporter;
 import minegame159.lightmap.mixin.MinecraftServerAccessor;
 import minegame159.lightmap.models.BlockColors;
-import minegame159.lightmap.models.TextureResolver;
 import minegame159.lightmap.server.LightServer;
+import minegame159.lightmap.task.TaskQueue;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.client.color.world.FoliageColors;
 import net.minecraft.client.color.world.GrassColors;
-import net.minecraft.client.render.model.json.JsonUnbakedModel;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.WorldChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +41,8 @@ public class LightMap implements DedicatedServerModInitializer {
     private final Long2ObjectMap<PendingChunk> pendingChunks = new Long2ObjectOpenHashMap<>();
 
     private WorldImporter importer;
+    private TaskQueue importQueue;
+    private ImportRegionTask importTask;
     private int importTimer;
 
     private LightServer server;
@@ -72,7 +71,13 @@ public class LightMap implements DedicatedServerModInitializer {
         File directory = new File(world.getChunkManager().threadedAnvilChunkStorage.getSaveDir(), "region");
 
         importer = new WorldImporter(world, directory);
+        importQueue = new TaskQueue("Region Importer");
         importTimer = 0;
+
+        if (importer.hasMore()) {
+            importTask = importer.getImportRegionTask();
+            importQueue.add(importTask);
+        }
 
         LOG.info("Starting world import");
     }
@@ -115,7 +120,7 @@ public class LightMap implements DedicatedServerModInitializer {
             dataDirectory = new File(new File(((MinecraftServerAccessor) world.getServer()).light$session().getWorldDirectory(World.OVERWORLD).toFile(), "data"), "lightmap");
             dataDirectory.mkdirs();
 
-            tasks = new TaskQueue();
+            tasks = new TaskQueue(null);
             this.world = new LightWorld(world, dataDirectory);
 
             this.server = new LightServer(dataDirectory);
@@ -154,22 +159,38 @@ public class LightMap implements DedicatedServerModInitializer {
 
         // Importer
         if (importer != null) {
-            if (tasks.count() == 0) {
+            tickImporter();
+        }
+    }
+
+    private void tickImporter() {
+        // Log progress
+        if (importTimer % 20 == 0) {
+            LOG.info("World import progress: {} / {} regions", importer.finishedCount(), importer.count());
+        }
+
+        importTimer++;
+
+        // Main task queue empty
+        if (tasks.count() == 0) {
+            if (importTask != null && importTask.isFinished()) {
+                importTask.enqueue(tasks);
+                importTask = null;
+
                 if (importer.hasMore()) {
-                    tasks.add(() -> importer.importRegion(tasks));
-                }
-                else {
-                    LOG.info("World import finished");
-                    importer = null;
+                    importTask = importer.getImportRegionTask();
+                    importQueue.add(importTask);
                 }
             }
 
-            if (importer != null) {
-                if (importTimer % 20 == 0) {
-                    LOG.info("World import progress: {} / {} regions", importer.finishedCount(), importer.count());
-                }
+            if (importTask == null) {
+                LOG.info("World import finished, took {} ticks, {} seconds", importTimer, importTimer / 20.0);
 
-                importTimer++;
+                importQueue.stop();
+
+                importTask = null;
+                importQueue = null;
+                importer = null;
             }
         }
     }

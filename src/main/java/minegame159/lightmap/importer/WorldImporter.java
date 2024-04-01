@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import minegame159.lightmap.LightMap;
 import minegame159.lightmap.LightWorld;
 import minegame159.lightmap.RenderTask;
-import minegame159.lightmap.TaskQueue;
+import minegame159.lightmap.task.Task;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.registry.Registry;
@@ -21,6 +21,7 @@ import net.minecraft.world.storage.RegionFile;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class WorldImporter {
     private final World world;
@@ -53,7 +54,11 @@ public class WorldImporter {
         return i < files.length;
     }
 
-    public void importRegion(TaskQueue tasks) {
+    public ImportRegionTask getImportRegionTask() {
+        return new ImportRegionTask(this);
+    }
+
+    void importRegion(List<Task> tasks) {
         File file = getRegionFile();
         if (file == null) return;
 
@@ -98,7 +103,7 @@ public class WorldImporter {
             throw new RuntimeException(e);
         }
 
-        tasks.add(() -> LightMap.getInstance().getWorld().flushAndClose(regionX, regionZ));
+        tasks.add(new FlushRegionTask(regionX, regionZ));
     }
 
     private File getRegionFile() {
@@ -121,5 +126,19 @@ public class WorldImporter {
         }
 
         return null;
+    }
+
+    private static class FlushRegionTask extends Task {
+        private final int x, z;
+
+        private FlushRegionTask(int x, int z) {
+            this.x = x;
+            this.z = z;
+        }
+
+        @Override
+        protected void runImpl() {
+            LightMap.getInstance().getWorld().flushAndClose(x, z);
+        }
     }
 }

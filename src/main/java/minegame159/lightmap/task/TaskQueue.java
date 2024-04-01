@@ -1,17 +1,25 @@
-package minegame159.lightmap;
+package minegame159.lightmap.task;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TaskQueue {
-    private final ArrayBlockingQueue<Runnable> tasks = new ArrayBlockingQueue<>(32 * 32 + 8);
+    private final ArrayBlockingQueue<Task> tasks = new ArrayBlockingQueue<>(32 * 32 + 8);
     private final AtomicInteger taskCount = new AtomicInteger();
 
-    private final Thread thread = new Thread(this::run, "LightMap - Worker");
+    private final Thread thread;
     private volatile boolean running;
 
-    public TaskQueue() {
+    public TaskQueue(String name) {
+        String fullName = "LightMap - Worker";
+
+        if (name != null) {
+            fullName += " - " + name;
+        }
+
+        thread = new Thread(this::run, fullName);
         thread.start();
+
         running = true;
     }
 
@@ -19,7 +27,7 @@ public class TaskQueue {
         return taskCount.get();
     }
 
-    public void add(Runnable task) {
+    public void add(Task task) {
         if (running && !tasks.offer(task)) {
             throw new IllegalStateException("LightMap - TaskQueue is full, cannot add a new task");
         }
@@ -29,7 +37,7 @@ public class TaskQueue {
     }
 
     public void stop() {
-        add(TaskQueue::stopTask);
+        add(StopTask.INSTANCE);
         running = false;
 
         try {
@@ -42,7 +50,7 @@ public class TaskQueue {
     private void run() {
         while (true) {
             try {
-                Runnable task = tasks.take();
+                Task task = tasks.take();
                 if (!running) return;
 
                 task.run();
@@ -53,7 +61,12 @@ public class TaskQueue {
         }
     }
 
-    private static void stopTask() {
-        throw new IllegalStateException("LightMap - TaskQueue - Stop task ran, bad");
+    private static class StopTask extends Task {
+        private static final StopTask INSTANCE = new StopTask();
+
+        @Override
+        protected void runImpl() {
+            throw new IllegalStateException("LightMap - TaskQueue - Stop task ran, bad");
+        }
     }
 }

@@ -1,8 +1,9 @@
 package minegame159.lightmap;
 
+import minegame159.lightmap.task.Task;
 import net.minecraft.util.math.ChunkPos;
 
-public class RenderTask implements Runnable {
+public class RenderTask extends Task {
     private final LightWorld world;
     private final LightChunk chunk;
 
@@ -12,7 +13,7 @@ public class RenderTask implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void runImpl() {
         ChunkPos pos = chunk.getPos();
 
         LightRegion region = world.getRegion(pos);
