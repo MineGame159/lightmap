@@ -11,5 +11,5 @@ public interface LightChunk {
     int getBottomY();
 
     BlockState getBlockState(int x, int y, int z);
-    Biome getBiome(int x, int y, int z);
+    LightBiome getBiome(int x, int y, int z);
 }

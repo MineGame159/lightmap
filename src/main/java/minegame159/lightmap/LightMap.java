@@ -116,6 +116,7 @@ public class LightMap implements DedicatedServerModInitializer {
 
             GrassColors.setColorMap(loadColorMap("/grass.png"));
             FoliageColors.setColorMap(loadColorMap("/foliage.png"));
+            LightBiome.init(world.getServer());
 
             dataDirectory = new File(new File(((MinecraftServerAccessor) world.getServer()).light$session().getWorldDirectory(World.OVERWORLD).toFile(), "data"), "lightmap");
             dataDirectory.mkdirs();

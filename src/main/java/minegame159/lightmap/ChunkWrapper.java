@@ -41,7 +41,8 @@ public class ChunkWrapper implements LightChunk {
     }
 
     @Override
-    public Biome getBiome(int x, int y, int z) {
-        return chunk.getBiomeForNoiseGen(BiomeCoords.fromBlock(x), BiomeCoords.fromBlock(y), BiomeCoords.fromBlock(z)).value();
+    public LightBiome getBiome(int x, int y, int z) {
+        Biome biome = chunk.getBiomeForNoiseGen(BiomeCoords.fromBlock(x), BiomeCoords.fromBlock(y), BiomeCoords.fromBlock(z)).value();
+        return LightBiome.get(biome);
     }
 }

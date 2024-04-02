@@ -1,6 +1,7 @@
 package minegame159.lightmap.importer;
 
 import com.mojang.serialization.Codec;
+import minegame159.lightmap.LightBiome;
 import minegame159.lightmap.LightChunk;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -79,9 +80,10 @@ public class NbtChunk implements LightChunk {
     }
 
     @Override
-    public Biome getBiome(int x, int y, int z) {
+    public LightBiome getBiome(int x, int y, int z) {
         Section section = getSection(y);
-        return section.getBiome(BiomeCoords.fromBlock(x), BiomeCoords.fromBlock(y) & 3, BiomeCoords.fromBlock(z));
+        Biome biome = section.getBiome(BiomeCoords.fromBlock(x), BiomeCoords.fromBlock(y) & 3, BiomeCoords.fromBlock(z));
+        return LightBiome.get(biome);
     }
 
     private Section getSection(int y) {

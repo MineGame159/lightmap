@@ -1,6 +1,8 @@
 package minegame159.lightmap.importer;
 
 import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import minegame159.lightmap.LightMap;
 import minegame159.lightmap.LightWorld;
 import minegame159.lightmap.RenderTask;
@@ -59,9 +61,39 @@ public class WorldImporter {
     }
 
     void importRegion(List<Task> tasks) {
-        File file = getRegionFile();
-        if (file == null) return;
+        Int2ObjectMap<RenderTask> map = createRenderTasks();
+        if (map == null) return;
 
+        for (int pos : map.keySet()) {
+            int x = getPosX(pos);
+            int z = getPosZ(pos);
+
+            RenderTask task = map.get(pos);
+
+            for (int offsetX = -1; offsetX <= 1; offsetX++) {
+                for (int offsetZ = -1; offsetZ <= 1; offsetZ++) {
+                    int neighbourX = x + offsetX;
+                    int neighbourZ = z + offsetZ;
+
+                    if (neighbourX < 0 || neighbourX >= 32 || neighbourZ < 0 || neighbourZ >= 32) {
+                        continue;
+                    }
+
+                    RenderTask neighbour = map.get(packPos(neighbourX, neighbourZ));
+                    task.setChunk(offsetX, offsetZ, neighbour != null ? neighbour.getCurrent() : null);
+                }
+            }
+        }
+
+        tasks.addAll(map.values());
+        tasks.add(new FlushRegionTask(regionX, regionZ));
+    }
+
+    private Int2ObjectMap<RenderTask> createRenderTasks() {
+        File file = getRegionFile();
+        if (file == null) return null;
+
+        Int2ObjectMap<RenderTask> tasks = new Int2ObjectOpenHashMap<>();
         RegionFile region;
 
         try {
@@ -69,7 +101,7 @@ public class WorldImporter {
         }
         catch (IOException e) {
             LightMap.LOG.error("Failed to read region at [{}, {}]", regionX, regionZ);
-            return;
+            return null;
         }
 
         for (int chunkX = 0; chunkX < 32; chunkX++) {
@@ -92,7 +124,7 @@ public class WorldImporter {
                 ChunkPos pos = new ChunkPos(regionX * 32 + chunkX, regionZ * 32 + chunkZ);
 
                 world.getRegion(pos).addPending();
-                tasks.add(new RenderTask(world, new NbtChunk(this.world, pos, biomeCodec, nbt)));
+                tasks.put(packPos(chunkX, chunkZ), new RenderTask(world, new NbtChunk(this.world, pos, biomeCodec, nbt)));
             }
         }
 
@@ -103,7 +135,7 @@ public class WorldImporter {
             throw new RuntimeException(e);
         }
 
-        tasks.add(new FlushRegionTask(regionX, regionZ));
+        return tasks;
     }
 
     private File getRegionFile() {
@@ -126,6 +158,17 @@ public class WorldImporter {
         }
 
         return null;
+    }
+
+    private static int packPos(int x, int z) {
+        return (x << 6) | (z);
+    }
+
+    private static int getPosX(int pos) {
+        return pos >> 6;
+    }
+    private static int getPosZ(int pos) {
+        return pos & 31;
     }
 
     private static class FlushRegionTask extends Task {

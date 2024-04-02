@@ -9,7 +9,8 @@ import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.biome.source.BiomeCoords;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,8 @@ public class ChunkRenderer {
         private BlockState collidableState;
     }
 
-    private static final Column[] columns = new Column[16 * 16];
+    private static final Column[] columns = new Column[16 * 17];
+    private static final LightBiome[] biomes = new LightBiome[6 * 6];
 
     static {
         for (int i = 0; i < columns.length; i++) {
@@ -33,19 +35,49 @@ public class ChunkRenderer {
         }
     }
 
-    public static void render(LightChunk chunk, LightChunkView view) {
-        // Fill
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                fillColumn(chunk, x, z, columns[z * 16 + x]);
-            }
-        }
+    private static Column getColumn(int x, int z) {
+        return columns[z * 16 + x];
+    }
+
+    private static LightBiome getBiome(int x, int z) {
+        return biomes[(BiomeCoords.fromBlock(z) + 1) * 6 + (BiomeCoords.fromBlock(x) + 1)];
+    }
+
+    private static void setBiome(int x, int z, LightBiome biome) {
+        biomes[(BiomeCoords.fromBlock(z) + 1) * 6 + (BiomeCoords.fromBlock(x) + 1)] = biome;
+    }
+
+    public static void render(RenderTask task) {
+        fillColumns(task);
+        fillBiomes(task);
 
         // Render
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                Column current = columns[z * 16 + x];
-                if (current.topY != -1) renderColumn(chunk, view, x,  z, current);
+                Column current = getColumn(x, z);
+                if (current.topY != -1) renderColumn(task, x,  z, current);
+            }
+        }
+    }
+
+    private static void fillColumns(RenderTask task) {
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                fillColumn(task.getCurrent(), x, z, getColumn(x, z));
+            }
+        }
+
+        if (task.getChunk(0, 1) != null) {
+            for (int x = 0; x < 16; x++) {
+                fillColumn(task.getChunk(0, 1), x, 0, getColumn(x, 16));
+            }
+        }
+        else {
+            for (int x = 0; x < 16; x++) {
+                Column column = getColumn(x, 16);
+
+                column.topY = Integer.MIN_VALUE;
+                column.collidableY = Integer.MIN_VALUE;
             }
         }
     }
@@ -85,7 +117,47 @@ public class ChunkRenderer {
         column.collidableState = state;
     }
 
-    private static void renderColumn(LightChunk chunk, LightChunkView view, int x, int z, Column current) {
+    private static void fillBiomes(RenderTask task) {
+        for (int x = -4; x < 20; x += 4) {
+            for (int z = -4; z < 20; z += 4) {
+                int cx = 0;
+                int cz = 0;
+
+                if (x < 0) cx = -1;
+                else if (x >= 16) cx = 1;
+
+                if (z < 0) cz = -1;
+                else if (z >= 16) cz = 1;
+
+                int rx = x & 15;
+                int rz = z & 15;
+
+                LightChunk chunk = task.getChunk(cx, cz);
+                LightBiome biome;
+
+                if (x == rx && z == rz) {
+                    Column column = getColumn(rx, rz);
+                    biome = chunk.getBiome(rx, column.topY, rz);
+                }
+                else if (chunk != null) {
+                    biome = chunk.getBiome(rx, chunk.getTopY(rx, rz), rz);
+                }
+                else {
+                    rx = (rx - cx * 4) & 15;
+                    rz = (rx - cz * 4) & 15;
+
+                    Column column = getColumn(rx, rz);
+                    biome = task.getCurrent().getBiome(rx, column.topY, rz);
+                }
+
+                setBiome(x, z, biome);
+            }
+        }
+    }
+
+    private static void renderColumn(RenderTask task, int x, int z, Column current) {
+        LightChunk chunk = task.getCurrent();
+
         if (isWater(current.topState)) {
             // Water
             int depth = current.topY - current.collidableY;
@@ -94,21 +166,23 @@ public class ChunkRenderer {
             int underColor = getColor(chunk, current.collidableState, x, current.collidableY, z);
 
             int abgr = mix(color, underColor, 0.15f / (depth / 2f));
-            view.set(x, z, toArgb(abgr, MapColor.Brightness.NORMAL));
+            task.set(x, z, toArgb(abgr, MapColor.Brightness.NORMAL));
         }
         else {
             // Other
             MapColor.Brightness brightness = MapColor.Brightness.NORMAL;
 
-            if (z + 1 < 16) {
-                Column above = columns[(z + 1) * 16 + x];
+            if (z + 1 < 17) {
+                Column above = getColumn(x, z + 1);
 
-                if (above.topY > current.topY) brightness = MapColor.Brightness.HIGH;
-                else if (above.topY < current.topY) brightness = MapColor.Brightness.LOW;
+                if (above.topY != Integer.MIN_VALUE) {
+                    if (above.topY > current.topY) brightness = MapColor.Brightness.HIGH;
+                    else if (above.topY < current.topY) brightness = MapColor.Brightness.LOW;
+                }
             }
 
             int abgr = getColor(chunk, current.topState, x, current.topY, z);
-            if (abgr != 0) view.set(x, z, toArgb(abgr, brightness));
+            if (abgr != 0) task.set(x, z, toArgb(abgr, brightness));
         }
     }
 
@@ -144,6 +218,56 @@ public class ChunkRenderer {
         return mapColor == MapColor.CLEAR ? 0 : mapColor.getRenderColor(MapColor.Brightness.HIGH);
     }
 
+    private enum BiomeColorType {
+        Grass,
+        Foliage,
+        Water
+    }
+
+    private static int getAverageBiomeColor(ChunkPos pos, BiomeColorType type, int x, int z) {
+        int r = 0;
+        int g = 0;
+        int b = 0;
+
+        final int count = 9 * 9;
+
+        for (int offsetX = -4; offsetX <= 4; offsetX++) {
+            for (int offsetZ = -4; offsetZ <= 4; offsetZ++) {
+                LightBiome biome = getBiome(x + offsetX, z + offsetZ);
+
+                switch (type) {
+                    case Grass -> {
+                        int color = biome.getGrassColor(pos.x * 16 + x, pos.z * 16 + z);
+
+                        r += (color) & 0xFF;
+                        g += (color >> 8) & 0xFF;
+                        b += (color >> 16) & 0xFF;
+                    }
+                    case Foliage -> {
+                        int color = biome.getFoliageColor();
+
+                        r += (color) & 0xFF;
+                        g += (color >> 8) & 0xFF;
+                        b += (color >> 16) & 0xFF;
+                    }
+                    case Water -> {
+                        int color = biome.getWaterColor();
+
+                        r += (color) & 0xFF * 190 / 255;
+                        g += (color >> 8) & 0xFF * 190 / 255;
+                        b += (color >> 16) & 0xFF * 190 / 255;
+                    }
+                }
+            }
+        }
+
+        r /= count;
+        g /= count;
+        b /= count;
+
+        return (255 << 24) | (b << 16) | (g << 8) | (r);
+    }
+
     private static final Identifier GRASS_BLOCK_TOP = new Identifier("minecraft", "grass_block_top");
     private static final Identifier GRASS = new Identifier("minecraft", "grass");
     private static final Identifier WATER_STILL = new Identifier("minecraft", "water_still");
@@ -151,8 +275,7 @@ public class ChunkRenderer {
     static {
         registerColorProvider(
                 (chunk, state, x, y, z) -> {
-                    Biome biome = chunk.getBiome(x, y, z);
-                    int color = biome.getGrassColorAt(chunk.getPos().x * 16 + x, chunk.getPos().z * 16 + z);
+                    int color = getAverageBiomeColor(chunk.getPos(), BiomeColorType.Grass, x, z);
 
                     int average = BlockColors.get(GRASS_BLOCK_TOP);
                     if (average == 0) return color;
@@ -176,8 +299,7 @@ public class ChunkRenderer {
 
         registerColorProvider(
                 (chunk, state, x, y, z) -> {
-                    Biome biome = chunk.getBiome(x, y, z);
-                    int color = biome.getGrassColorAt(chunk.getPos().x * 16 + x, chunk.getPos().z * 16 + z);
+                    int color = getAverageBiomeColor(chunk.getPos(), BiomeColorType.Grass, x, z);
 
                     int average = BlockColors.get(GRASS);
                     if (average == 0) return color;
@@ -203,8 +325,7 @@ public class ChunkRenderer {
 
         registerColorProvider(
                 (chunk, state, x, y, z) -> {
-                    Biome biome = chunk.getBiome(x, y, z);
-                    int color = biome.getFoliageColor();
+                    int color = getAverageBiomeColor(chunk.getPos(), BiomeColorType.Foliage, x, z);
 
                     int average = BlockColors.get(state.getBlock());
                     if (average == 0) return color;
@@ -235,8 +356,7 @@ public class ChunkRenderer {
 
         registerColorProvider(
                 (chunk, state, x, y, z) -> {
-                    Biome biome = chunk.getBiome(x, y, z);
-                    int color = waterColorToAbgr(biome.getWaterColor());
+                    int color = getAverageBiomeColor(chunk.getPos(), BiomeColorType.Water, x, z);
 
                     int average = BlockColors.get(WATER_STILL);
                     if (average == 0) return color;
@@ -259,15 +379,6 @@ public class ChunkRenderer {
                 Blocks.BUBBLE_COLUMN,
                 Blocks.WATER_CAULDRON
         );
-    }
-
-    private static int waterColorToAbgr(int color) {
-        int r = (color >> 16) & 0xFF * 190 / 255;
-        int g = (color >> 8) & 0xFF * 190 / 255;
-        int b = (color) & 0xFF * 190 / 255;
-        int a = (color >> 24) & 0xFF;
-
-        return (a << 24) | (b << 16) | (g << 8) | (r);
     }
 
     private static void registerColorProvider(ColorProvider provider, Block... blocks) {

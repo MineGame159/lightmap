@@ -6,7 +6,8 @@
   "server": [
     "BlockItemMixin",
     "ServerPlayerInteractionManagerMixin",
-    "MinecraftServerAccessor"
+    "MinecraftServerAccessor",
+    "BiomeAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
