@@ -3,6 +3,7 @@ package minegame159.lightmap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
+import minegame159.lightmap.claims.ClaimProviders;
 import minegame159.lightmap.commands.Commands;
 import minegame159.lightmap.importer.ImportRegionTask;
 import minegame159.lightmap.importer.WorldImporter;
@@ -36,7 +37,7 @@ public class LightMap implements DedicatedServerModInitializer {
     private File dataDirectory;
 
     private TaskQueue tasks;
-    private LightWorld world;
+    public LightWorld world;
 
     private final Long2ObjectMap<PendingChunk> pendingChunks = new Long2ObjectOpenHashMap<>();
 
@@ -116,7 +117,9 @@ public class LightMap implements DedicatedServerModInitializer {
 
             GrassColors.setColorMap(loadColorMap("/grass.png"));
             FoliageColors.setColorMap(loadColorMap("/foliage.png"));
+
             LightBiome.init(world.getServer());
+            ClaimProviders.init();
 
             dataDirectory = new File(new File(((MinecraftServerAccessor) world.getServer()).light$session().getWorldDirectory(World.OVERWORLD).toFile(), "data"), "lightmap");
             dataDirectory.mkdirs();

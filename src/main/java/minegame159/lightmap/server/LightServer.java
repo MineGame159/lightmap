@@ -12,12 +12,14 @@ import java.util.function.Consumer;
 
 public class LightServer {
     private final RegionHandler region;
+    private final ClaimsHandler claims;
     private final ResourceHandler ui;
 
     private final EventLoop eventLoop;
 
     public LightServer(File directory) {
         this.region = new RegionHandler(directory);
+        this.claims = new ClaimsHandler();
         this.ui = new ResourceHandler("/web");
 
         Options options = Options.builder()
@@ -49,6 +51,7 @@ public class LightServer {
 
         Response response = switch (uri.getPath()) {
             case "/api/region" -> region.get(HttpUtils.parseQuery(uri));
+            case "/api/claims" -> claims.get();
 
             case "/" -> ui.get(URI.create("/index.html"));
             default -> ui.get(uri);

@@ -17,13 +17,24 @@ html, body {
     transform-origin: 0 0;
 }
 
+#claims {
+    z-index: 1;
+    transform-origin: 0 0;
+}
+
+svg {
+    position: absolute;
+}
+
 #overlay {
     position: absolute;
-    z-index: 1;
+    z-index: 10;
 
     display: flex;
-    justify-content: center;
-    align-items: end;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+    gap: 0.25rem;
 
     width: calc(100vw - 1rem);
     height: calc(100vh - 1rem);

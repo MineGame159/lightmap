@@ -1,5 +1,7 @@
 package minegame159.lightmap.server;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.microhttp.Header;
 import org.microhttp.Response;
 
@@ -10,6 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 public class HttpUtils {
+    private static final Gson GSON = new GsonBuilder().create();
+
+    public static Response newJsonResponse(int status, Object body) {
+        return newByteResponse(status, "application/json; charset=utf-8", GSON.toJson(body).getBytes(StandardCharsets.UTF_8));
+    }
+
     public static Response newStringResponse(int status, String body) {
         return newByteResponse(status, "text/plain; charset=utf-8", body.getBytes(StandardCharsets.UTF_8));
     }

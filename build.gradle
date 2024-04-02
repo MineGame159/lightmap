@@ -11,6 +11,12 @@ base {
 }
 
 repositories {
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 dependencies {
@@ -25,6 +31,9 @@ dependencies {
     // MicroHTTP
     implementation "org.microhttp:microhttp:${project.microhttp_version}"
     include "org.microhttp:microhttp:${project.microhttp_version}"
+
+    // Open Parties and Claims
+    modCompileOnly("curse.maven:open-parties-and-claims-636608:4982662")
 }
 
 processResources {
