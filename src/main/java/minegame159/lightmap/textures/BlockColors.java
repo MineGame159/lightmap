@@ -1,4 +1,4 @@
-package minegame159.lightmap.models;
+package minegame159.lightmap.textures;
 
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -142,9 +142,9 @@ public class BlockColors {
 
                 int factor = getWeightedFactor(y - minY, height);
 
-                r += (pixel >> 16) & 0xFF * factor;
-                g += (pixel >> 8) & 0xFF * factor;
-                b += (pixel) & 0xFF * factor;
+                r += ((pixel >> 16) & 0xFF) * factor;
+                g += ((pixel >> 8) & 0xFF) * factor;
+                b += ((pixel) & 0xFF) * factor;
                 a += pixelA * factor;
 
                 count += factor;

@@ -1,6 +1,6 @@
 package minegame159.lightmap;
 
-import minegame159.lightmap.models.BlockColors;
+import minegame159.lightmap.textures.BlockColors;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -253,9 +253,9 @@ public class ChunkRenderer {
                     case Water -> {
                         int color = biome.getWaterColor();
 
-                        r += (color) & 0xFF * 190 / 255;
-                        g += (color >> 8) & 0xFF * 190 / 255;
-                        b += (color >> 16) & 0xFF * 190 / 255;
+                        r += ((color) & 0xFF) * 190 / 255;
+                        g += ((color >> 8) & 0xFF) * 190 / 255;
+                        b += ((color >> 16) & 0xFF) * 190 / 255;
                     }
                 }
             }

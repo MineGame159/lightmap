@@ -1,4 +1,4 @@
-package minegame159.lightmap.models;
+package minegame159.lightmap.textures;
 
 import com.google.gson.Gson;
 import minegame159.lightmap.LightMap;
@@ -32,6 +32,12 @@ public class TextureResolver {
     }
 
     public BufferedImage get(Identifier id) {
+        if (id.getNamespace().equals("minecraft")) return getVanilla(id);
+        //return getModded(id);
+        return null;
+    }
+
+    private BufferedImage getVanilla(Identifier id) {
         if (clientJar == null) openJar();
 
         JarEntry entry = clientJar.getJarEntry("assets/minecraft/textures/block/" + id.getPath() + ".png");
@@ -41,6 +47,17 @@ public class TextureResolver {
             InputStream in = clientJar.getInputStream(entry);
             if (in == null) return null;
 
+            return ImageIO.read(in);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private BufferedImage getModded(Identifier id) {
+        InputStream in = TextureResolver.class.getResourceAsStream("/assets/" + id.getNamespace() + "/textures/block/" + id.getPath() + ".png");
+        if (in == null) return null;
+
+        try {
             return ImageIO.read(in);
         } catch (IOException e) {
             throw new RuntimeException(e);

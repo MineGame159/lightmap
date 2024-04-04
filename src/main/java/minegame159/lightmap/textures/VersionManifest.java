@@ -1,4 +1,4 @@
-package minegame159.lightmap.models;
+package minegame159.lightmap.textures;
 
 public class VersionManifest {
     public Version[] versions;

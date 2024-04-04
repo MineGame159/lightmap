@@ -8,7 +8,7 @@ import minegame159.lightmap.commands.Commands;
 import minegame159.lightmap.importer.ImportRegionTask;
 import minegame159.lightmap.importer.WorldImporter;
 import minegame159.lightmap.mixin.MinecraftServerAccessor;
-import minegame159.lightmap.models.BlockColors;
+import minegame159.lightmap.textures.BlockColors;
 import minegame159.lightmap.server.LightServer;
 import minegame159.lightmap.task.TaskQueue;
 import net.fabricmc.api.DedicatedServerModInitializer;
