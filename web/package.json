@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "postbuild": "rm -rf ../src/main/resources/web && cp -r dist ../src/main/resources/web"
+    "postbuild": "rm -rf ../fabric/src/main/resources/web && cp -r dist ../fabric/src/main/resources/web"
   },
   "author": "MineGame159",
   "license": "ISC",
