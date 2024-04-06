@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "lightmap",
   "version": "${version}",
-  "name": "Lightmap",
+  "name": "Light Map",
   "description": "A simple and lightweight server web map.",
   "authors": [],
   "contact": {
@@ -13,12 +13,13 @@
   "environment": "server",
   "entrypoints": {
     "server": [
-      "minegame159.lightmap.LightMap"
+      "minegame159.lightmap.LightMapFabric"
     ]
   },
   "mixins": [
     "lightmap.mixins.json"
   ],
+  "accessWidener": "lightmap.accesswidener",
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",

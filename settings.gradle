@@ -8,4 +8,4 @@ pluginManagement {
     }
 }
 
-include("fabric")
+include("common", "fabric")

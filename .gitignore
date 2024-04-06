@@ -6,4 +6,4 @@ run
 
 web/dist
 web/node_modules
-src/main/resources/web
+common/src/main/resources/web

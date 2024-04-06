@@ -1,5 +1,6 @@
 plugins {
     id("fabric-loom") version "1.6-SNAPSHOT"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 base {
@@ -17,6 +18,8 @@ repositories {
     }
 }
 
+val shade: Configuration by configurations.creating
+
 dependencies {
     // Minecraft, Fabric
     minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
@@ -26,15 +29,19 @@ dependencies {
     // Fabric API
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
 
-    // MicroHTTP
-    implementation("org.microhttp:microhttp:${project.property("microhttp_version")}")
-    include("org.microhttp:microhttp:${project.property("microhttp_version")}")
+    // Common
+    implementation(project(":common"))
+    shade(project(":common"))
 
     // Open Parties and Claims
     modCompileOnly("curse.maven:open-parties-and-claims-636608:4982662")
 }
 
 tasks {
+    loom {
+        accessWidenerPath.set(file("src/main/resources/lightmap.accesswidener"))
+    }
+
     processResources {
         val properties = mapOf(
             "version" to project.version,
@@ -47,6 +54,15 @@ tasks {
         filesMatching("fabric.mod.json") {
             expand(properties)
         }
+    }
+
+    shadowJar {
+        configurations = listOf(shade)
+        archiveClassifier.set("dev")
+    }
+
+    remapJar {
+        inputFile.set(shadowJar.get().archiveFile)
     }
 
     jar {
@@ -63,5 +79,7 @@ tasks {
     java {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+
+        withSourcesJar()
     }
 }
