@@ -5,12 +5,12 @@ import minegame159.lightmap.task.Task;
 import minegame159.lightmap.utils.LightChunkPos;
 
 public class RenderTask extends Task {
-    private final LightWorld world;
+    private final World world;
     private final LightChunk[] chunks = new LightChunk[9];
 
-    private LightChunkView view;
+    private ChunkView view;
 
-    public RenderTask(LightWorld world, LightChunk chunk) {
+    public RenderTask(World world, LightChunk chunk) {
         this.world = world;
 
         setChunk(0, 0, chunk);
@@ -20,7 +20,7 @@ public class RenderTask extends Task {
     public void runImpl() {
         LightChunkPos pos = getCurrent().getPos();
 
-        LightRegion region = world.getRegion(pos);
+        Region region = world.getRegion(pos);
         view = region.getView(pos);
 
         ChunkRenderer.render(this);

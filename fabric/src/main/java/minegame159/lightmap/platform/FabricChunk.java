@@ -7,19 +7,27 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeCoords;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.WorldChunk;
 
 public class FabricChunk implements LightChunk {
     private final BlockPos.Mutable POS = new BlockPos.Mutable();
 
+    private final LightWorld world;
     private final LightChunkPos pos;
-    private final WorldChunk chunk;
+    private final Chunk chunk;
     private final Heightmap heightmap;
 
-    public FabricChunk(WorldChunk chunk) {
+    public FabricChunk(LightWorld world, Chunk chunk) {
+        this.world = world;
         this.pos = new LightChunkPos(chunk.getPos().x, chunk.getPos().z);
         this.chunk = chunk;
         this.heightmap = chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE);
+    }
+
+    @Override
+    public LightWorld getWorld() {
+        return world;
     }
 
     @Override

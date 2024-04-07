@@ -3,6 +3,7 @@ package minegame159.lightmap.platform;
 import com.mojang.serialization.Codec;
 import minegame159.lightmap.mixininterface.IBiome;
 import minegame159.lightmap.mixininterface.IBlockState;
+import minegame159.lightmap.mixininterface.IServerWorld;
 import minegame159.lightmap.utils.LightChunkPos;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -56,6 +57,11 @@ public class FabricNbtChunk implements LightChunk {
         heightmap = new PackedIntegerArray(elementBits, 256, heightmapData);
 
         if (heightmapData == null) calculateHeightmap();
+    }
+
+    @Override
+    public LightWorld getWorld() {
+        return ((IServerWorld) world).lightmap$getWorld();
     }
 
     @Override

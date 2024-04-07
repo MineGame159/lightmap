@@ -1,18 +1,15 @@
 package minegame159.lightmap.server;
 
+import minegame159.lightmap.LightMap;
 import org.microhttp.Response;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 public class RegionHandler {
-    private final File directory;
-
-    public RegionHandler(File directory) {
-        this.directory = directory;
-    }
+    private Path folder;
 
     public Response get(Map<String, String> query) {
         int x, z;
@@ -25,11 +22,15 @@ public class RegionHandler {
             return HttpUtils.newStringResponse(400, "Invalid position");
         }
 
-        File file = new File(directory, "r_" + x + "_" + z + ".png");
+        if (folder == null) {
+            folder = LightMap.get().getPlatform().getDataFolder().resolve("minecraft:overworld");
+        }
 
-        if (file.exists()) {
+        Path path = folder.resolve("r_" + x + "_" + z + ".png");
+
+        if (Files.exists(path)) {
             try {
-                byte[] bytes = Files.readAllBytes(file.toPath());
+                byte[] bytes = Files.readAllBytes(path);
                 return HttpUtils.newByteResponse(200, "image/png", bytes);
             } catch (IOException e) {
                 throw new RuntimeException(e);

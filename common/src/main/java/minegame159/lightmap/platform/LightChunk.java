@@ -3,6 +3,8 @@ package minegame159.lightmap.platform;
 import minegame159.lightmap.utils.LightChunkPos;
 
 public interface LightChunk {
+    LightWorld getWorld();
+
     LightChunkPos getPos();
 
     int getTopY(int x, int z);

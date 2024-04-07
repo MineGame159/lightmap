@@ -1,4 +1,4 @@
-package minegame159.lightmap.claims;
+package minegame159.lightmap.utils;
 
 import java.util.Collection;
 

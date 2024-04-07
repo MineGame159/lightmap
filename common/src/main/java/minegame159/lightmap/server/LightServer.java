@@ -17,8 +17,8 @@ public class LightServer {
 
     private final EventLoop eventLoop;
 
-    public LightServer(File directory) {
-        this.region = new RegionHandler(directory);
+    public LightServer() {
+        this.region = new RegionHandler();
         this.claims = new ClaimsHandler();
         this.ui = new ResourceHandler("/web");
 

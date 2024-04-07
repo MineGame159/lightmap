@@ -1,6 +1,6 @@
 package minegame159.lightmap.claims;
 
-import minegame159.lightmap.utils.LightId;
+import minegame159.lightmap.utils.Claim;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import xaero.pac.common.claims.player.api.IPlayerClaimPosListAPI;
@@ -8,25 +8,26 @@ import xaero.pac.common.server.api.OpenPACServerAPI;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class OpenPACClaimProvider implements ClaimProvider {
+public class OpenPACClaimSupplier implements Supplier<Collection<Claim>> {
     private final MinecraftServer server;
+    private final Identifier worldId;
 
-    public OpenPACClaimProvider(MinecraftServer server) {
+    public OpenPACClaimSupplier(MinecraftServer server, Identifier worldId) {
         this.server = server;
+        this.worldId = worldId;
     }
 
     @Override
-    public Collection<Claim> getClaims(LightId world) {
-        Identifier id = new Identifier(world.namespace(), world.path());
-
+    public Collection<Claim> get() {
         return OpenPACServerAPI.get(server).getServerClaimsManager().getPlayerInfoStream()
-                .filter(playerInfo -> playerInfo.getDimension(id) != null)
+                .filter(playerInfo -> playerInfo.getDimension(worldId) != null)
                 .map(playerInfo -> new Claim(
                         playerInfo.getClaimsName().isBlank() ? playerInfo.getPlayerUsername() + "'s claim" : playerInfo.getClaimsName(),
                         getColor(playerInfo.getClaimsColor()),
-                        playerInfo.getDimension(id).getStream()
+                        playerInfo.getDimension(worldId).getStream()
                                 .flatMap(IPlayerClaimPosListAPI::getStream)
                                 .map(pos -> new Claim.Chunk(pos.x, pos.z))
                                 .collect(Collectors.toCollection(ArrayList::new))

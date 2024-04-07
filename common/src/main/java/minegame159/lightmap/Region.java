@@ -11,12 +11,14 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.BitSet;
 
-public class LightRegion {
+public class Region {
     public static final int SIZE = 32;
 
-    private final File directory;
+    private final Path folder;
 
     private int x, z;
     private BitSet chunks;
@@ -26,11 +28,17 @@ public class LightRegion {
     private int pendingModifications;
     private long modifiedTime;
 
-    public LightRegion(File directory, int x, int z) {
-        this.directory = directory;
+    public Region(Path folder, int x, int z) {
+        this.folder = folder;
         this.x = x;
         this.z = z;
         this.chunks = new BitSet(SIZE * SIZE);
+
+        try {
+            Files.createDirectories(folder);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         readMetadata();
     }
@@ -39,12 +47,12 @@ public class LightRegion {
         return chunks.get(getChunkIndex(pos));
     }
 
-    public LightChunkView getView(LightChunkPos pos) {
+    public ChunkView getView(LightChunkPos pos) {
         if (image == null) {
             readImage();
         }
 
-        return new LightChunkView(
+        return new ChunkView(
                 image,
                 (pos.x() & (SIZE - 1)) * 16,
                 (pos.z() & (SIZE - 1)) * 16
@@ -94,7 +102,7 @@ public class LightRegion {
     // Image IO
 
     private void readImage() {
-        File file = new File(directory, "r_" + x + "_" + z + ".png");
+        File file = folder.resolve("r_" + x + "_" + z + ".png").toFile();
 
         if (file.exists()) {
             try {
@@ -103,13 +111,14 @@ public class LightRegion {
                 throw new RuntimeException(e);
             }
         }
-        else {
+
+        if (image == null) {
             image = new BufferedImage(SIZE * 16, SIZE * 16, BufferedImage.TYPE_INT_ARGB);
         }
     }
 
     private void writeImage() {
-        File file = new File(directory, "r_" + x + "_" + z + ".png");
+        File file = folder.resolve("r_" + x + "_" + z + ".png").toFile();
 
         try {
             ImageIO.write(image, "png", file);
@@ -121,7 +130,7 @@ public class LightRegion {
     // Metadata IO
 
     private void readMetadata() {
-        File file = new File(directory, "r_" + x + "_" + z + ".dat");
+        File file = folder.resolve("r_" + x + "_" + z + ".dat").toFile();
 
         if (file.exists()) {
             try {
@@ -133,7 +142,7 @@ public class LightRegion {
     }
 
     private void writeMetadata() {
-        File file = new File(directory, "r_" + x + "_" + z + ".dat");
+        File file = folder.resolve("r_" + x + "_" + z + ".dat").toFile();
 
         CompoundTag nbt = writeNbt();
         NBT.write(nbt, file);

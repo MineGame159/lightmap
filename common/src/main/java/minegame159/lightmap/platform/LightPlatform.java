@@ -10,7 +10,7 @@ public interface LightPlatform {
     Path getCacheFolder();
     Path getDataFolder();
 
-    Path getWorldFolder(LightId id);
+    LightWorld getWorld(LightId id);
 
     LightRegionImporter createRegionImporter(Path path);
 }

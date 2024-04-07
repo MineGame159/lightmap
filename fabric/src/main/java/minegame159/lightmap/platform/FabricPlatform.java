@@ -2,6 +2,7 @@ package minegame159.lightmap.platform;
 
 import minegame159.lightmap.LightMap;
 import minegame159.lightmap.mixin.MinecraftServerAccessor;
+import minegame159.lightmap.mixininterface.IServerWorld;
 import minegame159.lightmap.utils.LightId;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
@@ -15,9 +16,13 @@ import net.minecraft.world.storage.RegionFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FabricPlatform implements LightPlatform {
     private final MinecraftServer server;
+
+    private final Map<LightId, WorldHolder> worlds = new HashMap<>();
 
     public FabricPlatform(MinecraftServer server) {
         this.server = server;
@@ -39,9 +44,20 @@ public class FabricPlatform implements LightPlatform {
     }
 
     @Override
-    public Path getWorldFolder(LightId id) {
-        ServerWorld world = server.getWorld(RegistryKey.of(RegistryKeys.WORLD, new Identifier(id.namespace(), id.path())));
-        return Path.of(world.getChunkManager().threadedAnvilChunkStorage.getSaveDir());
+    public LightWorld getWorld(LightId id) {
+        WorldHolder holder = worlds.get(id);
+        if (holder != null) return holder.world();
+
+        ServerWorld mcWorld = server.getWorld(RegistryKey.of(RegistryKeys.WORLD, new Identifier(id.namespace(), id.path())));
+        if (mcWorld == null) {
+            worlds.put(id, new WorldHolder(null));
+            return null;
+        }
+
+        LightWorld world = ((IServerWorld) mcWorld).lightmap$getWorld();
+        worlds.put(id, new WorldHolder(world));
+
+        return world;
     }
 
     @Override
@@ -71,4 +87,6 @@ public class FabricPlatform implements LightPlatform {
             return null;
         }
     }
+
+    private record WorldHolder(LightWorld world) {}
 }
