@@ -1,10 +1,11 @@
 package minegame159.lightmap.server;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
+import minegame159.lightmap.utils.LightId;
 import org.microhttp.Header;
 import org.microhttp.Response;
 
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -12,7 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class HttpUtils {
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(LightId.class, new LightIdSerializer())
+            .create();
 
     public static Response newJsonResponse(int status, Object body) {
         return newByteResponse(status, "application/json; charset=utf-8", GSON.toJson(body).getBytes(StandardCharsets.UTF_8));
@@ -64,5 +67,12 @@ public class HttpUtils {
         }
 
         return query;
+    }
+
+    private static class LightIdSerializer implements JsonSerializer<LightId> {
+        @Override
+        public JsonElement serialize(LightId src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.toString());
+        }
     }
 }

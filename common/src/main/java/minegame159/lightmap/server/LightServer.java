@@ -1,5 +1,6 @@
 package minegame159.lightmap.server;
 
+import minegame159.lightmap.LightMap;
 import minegame159.lightmap.utils.LightId;
 import org.microhttp.EventLoop;
 import org.microhttp.Options;
@@ -49,30 +50,38 @@ public class LightServer {
     private void onRequest(Request req, Consumer<Response> callback) {
         URI uri = URI.create(req.uri());
 
+        // API
         if (uri.getPath().startsWith("/api/")) {
             callback.accept(routeApi(uri));
             return;
         }
 
-        Response response = switch (uri.getPath()) {
-            case "/" -> ui.get(URI.create("/index.html"));
+        // Other
+        if (uri.getPath().equals("/")) {
+            uri = URI.create("/index.html");
+        }
 
-            default -> ui.get(uri);
-        };
-
-        callback.accept(response);
+        callback.accept(ui.get(uri));
     }
 
     private Response routeApi(URI uri) {
-        int slashI = uri.getPath().indexOf('/', 5);
+        String path = uri.getPath();
+
+        // Global
+        if (path.equals("/api/worlds")) {
+            return HttpUtils.newJsonResponse(200, LightMap.get().getWorldIds());
+        }
+
+        // World specific
+        int slashI = path.indexOf('/', 5);
         if (slashI == -1) return HttpUtils.newStringResponse(404, "Not Found");
 
-        LightId world = LightId.of(uri.getPath().substring(5, slashI));
-        String after = uri.getPath().substring(slashI);
+        LightId worldId = LightId.of(path.substring(5, slashI));
+        String after = path.substring(slashI);
 
         return switch (after) {
-            case "/region" -> region.get(world, HttpUtils.parseQuery(uri));
-            case "/claims" -> claims.get(world);
+            case "/region" -> region.get(worldId, HttpUtils.parseQuery(uri));
+            case "/claims" -> claims.get(worldId);
 
             default -> HttpUtils.newStringResponse(404, "Not Found");
         };

@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -70,6 +71,10 @@ public class LightMap {
 
     public ResourceManager getResources() {
         return resources;
+    }
+
+    public Collection<LightId> getWorldIds() {
+        return worlds.keySet();
     }
 
     public void importWorld(LightId id) {
