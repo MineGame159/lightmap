@@ -87,7 +87,7 @@ public class LightMap {
             importQueue.add(importTask);
         }
 
-        LOG.info("Starting world import");
+        LOG.info("Starting world import for {}", id);
     }
 
     private void onChunkLoad(LightWorld lightWorld, int x, int z) {
