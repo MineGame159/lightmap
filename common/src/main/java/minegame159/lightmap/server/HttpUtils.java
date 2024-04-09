@@ -53,6 +53,8 @@ public class HttpUtils {
     }
 
     public static Map<String, String> parseQuery(URI uri) {
+        if (uri.getQuery() == null) return Map.of();
+
         Map<String, String> query = new HashMap<>();
         String[] pairs = uri.getQuery().split("&");
 

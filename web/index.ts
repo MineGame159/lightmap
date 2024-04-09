@@ -69,7 +69,7 @@ function loadRegion(x: number, z: number) {
     if (zSet.has(z)) return
     zSet.add(z)
 
-    fetchApi(`/api/region?x=${x}&z=${z}`)
+    fetchApi(`/api/overworld/region?x=${x}&z=${z}`)
         .then(res => {
             if (!res.ok) return
 
@@ -90,7 +90,7 @@ function loadRegion(x: number, z: number) {
 }
 
 function loadClaims() {
-    fetchApi("/api/claims")
+    fetchApi("/api/overworld/claims")
         .then(res => res.json())
         .then(claimsO => {
             for (const claim of (claimsO as Claim[])) {

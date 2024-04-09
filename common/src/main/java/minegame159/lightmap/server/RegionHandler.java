@@ -1,6 +1,7 @@
 package minegame159.lightmap.server;
 
 import minegame159.lightmap.LightMap;
+import minegame159.lightmap.utils.LightId;
 import org.microhttp.Response;
 
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.Map;
 public class RegionHandler {
     private Path folder;
 
-    public Response get(Map<String, String> query) {
+    public Response get(LightId worldId, Map<String, String> query) {
         int x, z;
 
         try {
@@ -23,10 +24,10 @@ public class RegionHandler {
         }
 
         if (folder == null) {
-            folder = LightMap.get().getPlatform().getDataFolder().resolve("minecraft:overworld");
+            folder = LightMap.get().getPlatform().getDataFolder();
         }
 
-        Path path = folder.resolve("r_" + x + "_" + z + ".png");
+        Path path = folder.resolve(worldId.toString()).resolve("r_" + x + "_" + z + ".png");
 
         if (Files.exists(path)) {
             try {
